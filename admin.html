@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-cover bg-center min-h-screen" style="background-image: url('imigrasi.jpg');">
+  <div class="bg-white/90 min-h-screen">
+    <div class="max-w-7xl mx-auto p-4">
+
+      <!-- Header -->
+      <header class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-3">
+          <img src="logouptimi.png" alt="Logo" class="h-12 w-12 object-contain rounded" />
+          <h1 class="text-2xl font-bold text-blue-900">Panel Admin</h1>
+        </div>
+        <div class="flex gap-2">
+          <button id="exportBtn" class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700">Export CSV</button>
+          <button id="exportExcelBtn" class="px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Export Excel</button>
+          <button id="logoutBtn" class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700">Logout</button>
+        </div>
+      </header>
+
+      <!-- Filter -->
+      <div class="mb-4 flex flex-wrap gap-3 items-end">
+        <div>
+          <label class="block text-sm">Filter Tanggal</label>
+          <input type="date" id="filterDate" class="border rounded p-1" />
+        </div>
+        <div>
+          <label class="block text-sm">Filter Bulan</label>
+          <input type="month" id="filterMonth" class="border rounded p-1" />
+        </div>
+        <div>
+          <label class="block text-sm">Nama Pegawai</label>
+          <input type="text" id="filterName" placeholder="Cari nama..." class="border rounded p-1" />
+        </div>
+        <div>
+          <label class="block text-sm">Dari Tanggal</label>
+          <input type="date" id="filterStart" class="border rounded p-1" />
+        </div>
+        <div>
+          <label class="block text-sm">Sampai Tanggal</label>
+          <input type="date" id="filterEnd" class="border rounded p-1" />
+        </div>
+
+        <button id="applyFilter" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Terapkan</button>
+        <button id="resetFilter" class="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600">Reset</button>
+      </div>
+
+      <!-- Statistik Kehadiran -->
+      <div id="statsPanel" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 bg-green-100 rounded-xl shadow text-center">
+          <h3 class="text-lg font-bold text-green-700">Total Kehadiran</h3>
+          <p id="statTotal" class="text-3xl font-extrabold text-green-800">0</p>
+          <p id="statTanggal" class="text-sm text-gray-500"></p>
+        </div>
+        <div class="p-4 bg-blue-100 rounded-xl shadow text-center">
+          <h3 class="text-lg font-bold text-blue-700">Tepat Waktu</h3>
+          <p id="statHadir" class="text-3xl font-extrabold text-blue-800">0</p>
+          <p class="text-sm text-gray-500">Hadir 06:00–07:59</p>
+        </div>
+        <div class="p-4 bg-red-100 rounded-xl shadow text-center">
+          <h3 class="text-lg font-bold text-red-700">Terlambat</h3>
+          <p id="statTelat" class="text-3xl font-extrabold text-red-800">0</p>
+          <p class="text-sm text-gray-500">≥ 08:00</p>
+        </div>
+      </div>
+
+      <!-- Tabel absensi -->
+      <div class="bg-white shadow rounded-xl p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4">Data Absensi</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="p-2 border">#</th>
+                <th class="p-2 border">Nama</th>
+                <th class="p-2 border">Tanggal</th>
+                <th class="p-2 border">Waktu</th>
+                <th class="p-2 border">Status</th>
+                <th class="p-2 border">Foto</th>
+              </tr>
+            </thead>
+            <tbody id="absensiTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Rekap Mingguan -->
+      <div class="bg-white shadow rounded-xl p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4">Rekap Mingguan</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="p-2 border">Nama</th>
+                <th class="p-2 border">Hadir</th>
+                <th class="p-2 border">Terlambat</th>
+                <th class="p-2 border">Total</th>
+              </tr>
+            </thead>
+            <tbody id="rekapMingguan"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Rekap Bulanan -->
+      <div class="bg-white shadow rounded-xl p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4">Rekap Bulanan</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="p-2 border">Nama</th>
+                <th class="p-2 border">Hadir</th>
+                <th class="p-2 border">Terlambat</th>
+                <th class="p-2 border">Total</th>
+              </tr>
+            </thead>
+            <tbody id="rekapBulanan"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Ranking Kehadiran -->
+      <div class="bg-white shadow rounded-xl p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4">Ranking Kehadiran</h2>
+        <ol id="rankingList" class="list-decimal list-inside space-y-1"></ol>
+      </div>
+
+      <!-- Grafik Kehadiran -->
+      <div class="bg-white shadow rounded-xl p-6 mt-6">
+        <h2 class="text-lg font-semibold mb-4">Grafik Kehadiran</h2>
+        <canvas id="chartMingguan" class="mb-6 max-h-64"></canvas>
+        <canvas id="chartBulanan" class="max-h-64"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Foto -->
+  <div id="photoModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+    <div class="bg-white p-4 rounded shadow max-w-lg">
+      <img id="modalImg" src="" class="max-h-[80vh] max-w-full rounded"/>
+      <button id="closeModal" class="mt-3 px-4 py-2 bg-red-600 text-white rounded">Tutup</button>
+    </div>
+  </div>
+
+  <script>
+    const absensiTable = document.getElementById("absensiTable");
+    const rankingList = document.getElementById("rankingList");
+    const filterDate = document.getElementById("filterDate");
+    const filterMonth = document.getElementById("filterMonth");
+
+    if (sessionStorage.getItem("isAdmin") !== "true") {
+      window.location.href = "login.html";
+    }
+
+    function getRecords() {
+      return JSON.parse(localStorage.getItem("absensi")) || [];
+    }
+
+    function renderTable(records) {
+      absensiTable.innerHTML = "";
+      records.forEach((r, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="border p-1">${i + 1}</td>
+          <td class="border p-1">${r.name}</td>
+          <td class="border p-1">${r.date}</td>
+          <td class="border p-1">${new Date(r.timestamp).toLocaleTimeString("id-ID")}</td>
+          <td class="border p-1 ${r.status === "Hadir" ? "text-green-600" : "text-red-600"}">${r.status}</td>
+          <td class="border p-1">
+            <img src="${r.photo}" data-photo="${r.photo}" class="w-16 h-16 rounded object-cover cursor-pointer"/>
+          </td>
+        `;
+        absensiTable.appendChild(tr);
+      });
+
+      document.querySelectorAll("[data-photo]").forEach(img => {
+        img.onclick = () => {
+          document.getElementById("modalImg").src = img.dataset.photo;
+          document.getElementById("photoModal").classList.remove("hidden");
+          document.getElementById("photoModal").classList.add("flex");
+        };
+      });
+    }
+
+    function renderRanking(records) {
+      const hadirCounts = {};
+      records.forEach(r => {
+        if (r.status === "Hadir") {
+          hadirCounts[r.name] = (hadirCounts[r.name] || 0) + 1;
+        }
+      });
+      const ranking = Object.entries(hadirCounts).sort((a, b) => b[1] - a[1]);
+      rankingList.innerHTML = "";
+      ranking.forEach(([name, count]) => {
+        const li = document.createElement("li");
+        li.textContent = `${name} - ${count}x Hadir`;
+        rankingList.appendChild(li);
+      });
+    }
+
+    function renderStats(records, label = "") {
+      document.getElementById("statTanggal").textContent = label;
+      const total = records.length;
+      const hadir = records.filter(r => r.status === "Hadir").length;
+      const telat = records.filter(r => r.status === "Terlambat").length;
+      document.getElementById("statTotal").textContent = total;
+      document.getElementById("statHadir").textContent = hadir;
+      document.getElementById("statTelat").textContent = telat;
+    }
+
+    function getToday() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function renderRekap(records, targetId) {
+      const counts = {};
+      records.forEach(r => {
+        if (!counts[r.name]) {
+          counts[r.name] = { hadir: 0, telat: 0 };
+        }
+        if (r.status === "Hadir") counts[r.name].hadir++;
+        if (r.status === "Terlambat") counts[r.name].telat++;
+      });
+      const tbody = document.getElementById(targetId);
+      tbody.innerHTML = "";
+      Object.entries(counts).forEach(([name, data]) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="border p-1">${name}</td>
+          <td class="border p-1 text-green-600">${data.hadir}</td>
+          <td class="border p-1 text-red-600">${data.telat}</td>
+          <td class="border p-1 font-bold">${data.hadir + data.telat}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderCharts(records) {
+      if (window.weekChart) window.weekChart.destroy();
+      if (window.monthChart) window.monthChart.destroy();
+
+      const dailyCounts = {};
+      records.forEach(r => {
+        dailyCounts[r.date] = (dailyCounts[r.date] || 0) + 1;
+      });
+
+      window.weekChart = new Chart(document.getElementById("chartMingguan"), {
+        type: "bar",
+        data: {
+          labels: Object.keys(dailyCounts),
+          datasets: [{
+            label: "Jumlah Kehadiran",
+            data: Object.values(dailyCounts),
+            backgroundColor: "#3b82f6"
+          }]
+        }
+      });
+
+      const hadir = records.filter(r => r.status === "Hadir").length;
+      const telat = records.filter(r => r.status === "Terlambat").length;
+      window.monthChart = new Chart(document.getElementById("chartBulanan"), {
+        type: "doughnut",
+        data: {
+          labels: ["Tepat Waktu", "Terlambat"],
+          datasets: [{
+            data: [hadir, telat],
+            backgroundColor: ["#10b981", "#ef4444"]
+          }]
+        }
+      });
+    }
+
+    // 🔹 Terapkan Filter
+    document.getElementById("applyFilter").onclick = () => {
+      let records = getRecords();
+      let label = "";
+
+      const name = document.getElementById("filterName").value.toLowerCase();
+      if (name) {
+        records = records.filter(r => r.name.toLowerCase().includes(name));
+      }
+
+      const start = document.getElementById("filterStart").value;
+      const end = document.getElementById("filterEnd").value;
+      if (start && end) {
+        records = records.filter(r => r.date >= start && r.date <= end);
+        label = `Dari ${new Date(start).toLocaleDateString("id-ID")} 
+                 s/d ${new Date(end).toLocaleDateString("id-ID")}`;
+      } else if (filterMonth.value) {
+        const [y, m] = filterMonth.value.split("-");
+        records = records.filter(r => r.date.startsWith(`${y}-${m}`));
+        label = `Bulan ${m}/${y}`;
+      } else if (filterDate.value) {
+        records = records.filter(r => r.date === filterDate.value);
+        label = new Date(filterDate.value).toLocaleDateString("id-ID");
+      } else {
+        records = records.filter(r => r.date === getToday());
+        label = "Hari ini";
+      }
+
+      renderTable(records);
+      renderRanking(records);
+      renderStats(records, label);
+      renderRekap(records, "rekapMingguan");
+      renderRekap(records, "rekapBulanan");
+      renderCharts(records);
+    };
+
+    // 🔹 Reset Filter
+    document.getElementById("resetFilter").onclick = () => {
+      filterDate.value = "";
+      filterMonth.value = "";
+      document.getElementById("filterName").value = "";
+      document.getElementById("filterStart").value = "";
+      document.getElementById("filterEnd").value = "";
+
+      const today = getToday();
+      const records = getRecords().filter(r => r.date === today);
+      renderTable(records);
+      renderRanking(records);
+      renderStats(records, "Hari ini");
+      renderRekap(records, "rekapMingguan");
+      renderRekap(records, "rekapBulanan");
+      renderCharts(records);
+    };
+
+    // 🔹 Init awal
+    const today = getToday();
+    filterDate.value = today;
+    const todayRecords = getRecords().filter(r => r.date === today);
+    renderTable(todayRecords);
+    renderRanking(todayRecords);
+    renderStats(todayRecords, "Hari ini");
+    renderRekap(todayRecords, "rekapMingguan");
+    renderRekap(todayRecords, "rekapBulanan");
+    renderCharts(todayRecords);
+
+    // Export CSV
+    document.getElementById("exportBtn").onclick = () => {
+      const records = getRecords();
+      if (!records.length) return alert("Belum ada data absensi!");
+      const header = ["Nama", "Tanggal", "Waktu", "Status"];
+      const rows = records.map(r => [r.name, r.date, new Date(r.timestamp).toLocaleTimeString("id-ID"), r.status]);
+      const csvContent = [header, ...rows].map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `absensi_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    };
+
+    // Export Excel
+    document.getElementById("exportExcelBtn").onclick = () => {
+      const records = getRecords();
+      if (!records.length) return alert("Belum ada data absensi!");
+      const worksheetData = records.map(r => ({
+        Nama: r.name,
+        Tanggal: r.date,
+        Waktu: new Date(r.timestamp).toLocaleTimeString("id-ID"),
+        Status: r.status
+      }));
+      const ws = XLSX.utils.json_to_sheet(worksheetData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Absensi");
+      XLSX.writeFile(wb, `absensi_${new Date().toISOString().slice(0,10)}.xlsx`);
+    };
+
+    document.getElementById("closeModal").onclick = () => {
+      document.getElementById("photoModal").classList.add("hidden");
+    };
+
+    document.getElementById("logoutBtn").onclick = () => {
+      sessionStorage.removeItem("isAdmin");
+      window.location.href = "login.html";
+    };
+    function renderTable(records) {
+  absensiTable.innerHTML = "";
+  if (!records.length) {
+    absensiTable.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center p-4 text-gray-500 italic">
+          Belum ada data absensi
+        </td>
+      </tr>`;
+    return;
+  }
+  records.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="border p-1">${i + 1}</td>
+      <td class="border p-1">${r.name}</td>
+      <td class="border p-1">${r.date}</td>
+      <td class="border p-1">${new Date(r.timestamp).toLocaleTimeString("id-ID")}</td>
+      <td class="border p-1 ${r.status === "Hadir" ? "text-green-600" : "text-red-600"}">${r.status}</td>
+      <td class="border p-1">
+        <img src="${r.photo}" data-photo="${r.photo}" class="w-16 h-16 rounded object-cover cursor-pointer"/>
+      </td>
+    `;
+    absensiTable.appendChild(tr);
+  });
+
+  document.querySelectorAll("[data-photo]").forEach(img => {
+    img.onclick = () => {
+      document.getElementById("modalImg").src = img.dataset.photo;
+      document.getElementById("photoModal").classList.remove("hidden");
+      document.getElementById("photoModal").classList.add("flex");
+    };
+  });
+}
+
+function renderRanking(records) {
+  const hadirCounts = {};
+  records.forEach(r => {
+    if (r.status === "Hadir") {
+      hadirCounts[r.name] = (hadirCounts[r.name] || 0) + 1;
+    }
+  });
+  const ranking = Object.entries(hadirCounts).sort((a, b) => b[1] - a[1]);
+  rankingList.innerHTML = "";
+
+  if (!ranking.length) {
+    rankingList.innerHTML = `<li class="text-gray-500 italic">Belum ada ranking</li>`;
+    return;
+  }
+
+  ranking.forEach(([name, count], idx) => {
+    let medal = "";
+    if (idx === 0) medal = "🥇 ";
+    else if (idx === 1) medal = "🥈 ";
+    else if (idx === 2) medal = "🥉 ";
+    const li = document.createElement("li");
+    li.textContent = `${medal}${name} - ${count}x Hadir`;
+    rankingList.appendChild(li);
+  });
+}
+
+  </script>
+</body>
+</html>
