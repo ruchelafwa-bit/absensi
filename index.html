@@ -67,7 +67,7 @@
     loginBtn.addEventListener("click", () => {
       if (username.value === adminUser && password.value === adminPass) {
         localStorage.setItem("isLoggedIn", "true");
-        window.location.href = "index.html";
+        window.location.href = "absensi.html";
       } else {
         errorMsg.classList.remove("hidden");
       }
@@ -86,3 +86,4 @@
   </style>
 </body>
 </html>
+
